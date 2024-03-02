@@ -1,0 +1,56 @@
+---
+- name: Uninstall default apt docker packages
+  ansible.builtin.apt:
+    state: absent
+    pkg:
+      - docker.io
+      - docker-compose
+      - docker-compose-v2
+      - docker-doc
+      - podman-docker
+      - containerd
+      - runc
+
+- name: Install docker
+  block:
+    - name: Change /etc/apt/keyrings ownership
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Install docker signing key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/trusted.gpg.d/docker.asc
+        mode: '0644'
+        force: true
+        owner: root
+        group: root
+
+    - name: Add docker repos to sources
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install docker packages
+      ansible.builtin.apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+
+- name: Copy minecraft docker compose file to /home/ubuntu
+  ansible.builtin.copy:
+    src: files/docker-compose.yml
+    dest: /home/ubuntu/docker-compose.yml
+    mode: '0600'
+    owner: "ubuntu"
+    group: "ubuntu"

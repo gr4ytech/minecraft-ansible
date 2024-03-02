@@ -1,0 +1,7 @@
+---
+- name: Install minecraft server
+  gather_facts: true
+  hosts: minecraft
+  become: true
+  roles:
+    - minecraft
